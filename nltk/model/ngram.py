@@ -32,7 +32,7 @@ class NgramModel(ModelI):
     A processing interface for assigning a probability to the next word.
     """
 
-    def __init__(self, bins, n, train, pad_left=True, pad_right=False,
+    def __init__(self, n, train, pad_left=True, pad_right=False,
                  estimator=None, **estimator_kwargs):
         """
         Create an ngram language model to capture patterns in n consecutive
@@ -108,7 +108,7 @@ class NgramModel(ModelI):
         # of word types encountered during training as the bins value.
         # If right padding is on, this includes the padding symbol.
         if 'bins' not in estimator_kwargs:
-            bins = len(vocabulary)
+            estimator_kwargs['bins'] = len(vocabulary)
 
         self._model = ConditionalProbDist(cfd, estimator, **estimator_kwargs)
 
