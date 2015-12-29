@@ -32,7 +32,7 @@ class NgramModel(ModelI):
     A processing interface for assigning a probability to the next word.
     """
 
-    def __init__(self, n, train, pad_left=True, pad_right=False,
+    def __init__(self, bins, n, train, pad_left=True, pad_right=False,
                  estimator=None, **estimator_kwargs):
         """
         Create an ngram language model to capture patterns in n consecutive
@@ -67,11 +67,8 @@ class NgramModel(ModelI):
 
         # protection from cryptic behavior for calling programs
         # that use the pre-2.0.2 interface
-        assert(isinstance(pad_left, bool))
-        assert(isinstance(pad_right, bool))
-
-        self._lpad = ('',) * (n - 1) if pad_left else ()
-        self._rpad = ('',) * (n - 1) if pad_right else ()
+        assert (isinstance(pad_left, bool))
+        assert (isinstance(pad_right, bool))
 
         # make sure n is greater than zero, otherwise print it
         assert (n > 0), n
@@ -111,16 +108,16 @@ class NgramModel(ModelI):
         # of word types encountered during training as the bins value.
         # If right padding is on, this includes the padding symbol.
         if 'bins' not in estimator_kwargs:
-            estimator_kwargs['bins'] = len(vocabulary)
+            bins = len(vocabulary)
 
         self._model = ConditionalProbDist(cfd, estimator, **estimator_kwargs)
 
         # recursively construct the lower-order models
         if not self.is_unigram_model:
-            self._backoff = NgramModel(n-1, train,
-                                        pad_left, pad_right,
-                                        estimator,
-                                        **estimator_kwargs)
+            self._backoff = NgramModel(n - 1, train,
+                                       pad_left, pad_right,
+                                       estimator,
+                                       **estimator_kwargs)
 
             self._backoff_alphas = dict()
             # For each condition (or context)
@@ -167,7 +164,7 @@ class NgramModel(ModelI):
         :type context: list(str)
         """
         context = tuple(context)
-        if (context + (word,) in self._ngrams) or (self.is_unigram_model):
+        if (context + (word,) in self._ngrams) or self.is_unigram_model:
             return self._probdist.prob((context, word))
         else:
             return self._alpha(context) * self._backoff.prob(word, context[1:])
@@ -207,26 +204,26 @@ class NgramModel(ModelI):
         return self._probdist
 
     def choose_random_word(self, context):
-        '''
+        """
         Randomly select a word that is likely to appear in this context.
 
         :param context: the context the word is in
         :type context: list(str)
-        '''
+        """
 
         return self.generate(1, context)[-1]
 
     # NB, this will always start with same word if the model
     # was trained on a single text
     def generate(self, num_words, context=()):
-        '''
+        """
         Generate random text based on the language model.
 
         :param num_words: number of words to generate
         :type num_words: int
         :param context: initial words in generated string
         :type context: list(str)
-        '''
+        """
 
         text = list(context)
         for i in range(num_words):
@@ -252,7 +249,7 @@ class NgramModel(ModelI):
         :type text: list(str)
         """
 
-        H = 0.0     # entropy is conventionally denoted by "H"
+        H = 0.0  # entropy is conventionally denoted by "H"
         text = list(self._lpad) + text + list(self._rpad)
         for i in range(self._n - 1, len(text)):
             context = tuple(text[(i - self._n + 1):i])
@@ -284,6 +281,8 @@ class NgramModel(ModelI):
     def __repr__(self):
         return '<NgramModel with %d %d-grams>' % (len(self._ngrams), self._n)
 
+
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
