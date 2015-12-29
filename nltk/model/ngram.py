@@ -163,7 +163,7 @@ class NgramModel(ModelI):
         """
         context = tuple(context)
         if (context + (word,) in self._ngrams) or self.is_unigram_model:
-            return self._probdist.prob((context, word))
+            return self._model[context].prob(word)
         else:
             return self._alpha(context) * self._backoff.prob(word, context[1:])
 
@@ -196,10 +196,6 @@ class NgramModel(ModelI):
     @property
     def backoff(self):
         return self._backoff
-
-    @property
-    def probdist(self):
-        return self._probdist
 
     def choose_random_word(self, context):
         """
